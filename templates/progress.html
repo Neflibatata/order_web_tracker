@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>处理进度 - Coach订单追踪系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">处理进度</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="errorSection" class="alert alert-danger" style="display: none;">
+                            <h5>处理出错</h5>
+                            <p id="errorMessage"></p>
+                            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">返回首页</a>
+                        </div>
+
+                        <div id="progressSection">
+                            <div class="alert alert-info mb-3">
+                                <h5>查询信息</h5>
+                                <p class="mb-1">总记录数：<span id="totalCount">0</span> 条</p>
+                                <p class="mb-0">当前状态：<span id="statusText">准备开始查询...</span></p>
+                            </div>
+
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                            
+                            <div class="stats-container">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">查询统计</h6>
+                                        <p class="mb-2">已处理: <span id="processedCount">0</span> / <span id="totalCountInner">0</span></p>
+                                        <p class="mb-2">成功查询: <span id="successCount" class="text-success">0</span> 条</p>
+                                        <p class="mb-2">失败查询: <span id="failCount" class="text-danger">0</span> 条</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">时间统计</h6>
+                                        <p class="mb-2">平均查询时间: <span id="avgTime">0</span> 秒/条</p>
+                                        <p class="mb-2">预计剩余时间: <span id="remainingTime">计算中...</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="completeSection" class="alert alert-success" style="display: none;">
+                            <h5>处理完成！</h5>
+                            <p>所有记录已处理完毕，点击下方按钮下载结果文件。</p>
+                            <div class="mt-3">
+                                <a id="downloadLink" href="#" class="btn btn-success me-2">
+                                    <i class="bi bi-download"></i> 下载结果文件
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                    <i class="bi bi-arrow-left"></i> 返回首页
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function formatTime(seconds) {
+            if (seconds < 60) {
+                return Math.round(seconds) + " 秒";
+            } else if (seconds < 3600) {
+                return Math.round(seconds / 60) + " 分钟";
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.round((seconds % 3600) / 60);
+                return hours + " 小时 " + minutes + " 分钟";
+            }
+        }
+
+        function updateProgress() {
+            fetch('/progress_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // 显示错误信息
+                        document.getElementById('progressSection').style.display = 'none';
+                        document.getElementById('completeSection').style.display = 'none';
+                        document.getElementById('errorSection').style.display = 'block';
+                        document.getElementById('errorMessage').textContent = data.error;
+                        return;
+                    }
+
+                    // 更新总数和状态文本
+                    document.getElementById('totalCount').textContent = data.total;
+                    document.getElementById('totalCountInner').textContent = data.total;
+                    document.getElementById('statusText').textContent = 
+                        data.is_processing ? "正在查询中..." : "查询完成";
+
+                    // 更新进度条
+                    const progressBar = document.querySelector('.progress-bar');
+                    progressBar.style.width = data.percentage + '%';
+                    progressBar.textContent = Math.round(data.percentage) + '%';
+
+                    // 更新统计信息
+                    document.getElementById('processedCount').textContent = data.current;
+                    document.getElementById('successCount').textContent = data.successful;
+                    document.getElementById('failCount').textContent = data.failed;
+                    document.getElementById('avgTime').textContent = data.avg_time.toFixed(2);
+                    document.getElementById('remainingTime').textContent = 
+                        formatTime(data.estimated_remaining_time);
+
+                    // 检查是否完成
+                    if (data.complete) {
+                        document.getElementById('progressSection').style.display = 'none';
+                        document.getElementById('completeSection').style.display = 'block';
+                        document.getElementById('downloadLink').href = data.download_url;
+                    } else if (data.is_processing) {
+                        // 如果还在处理中，继续更新
+                        setTimeout(updateProgress, 1000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('errorMessage').textContent = '获取进度信息失败';
+                    document.getElementById('errorSection').style.display = 'block';
+                });
+        }
+
+        // 开始更新进度
+        updateProgress();
+    </script>
+</body>
+</html> 

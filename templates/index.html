@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单查询系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>订单查询系统</h1>
+        
+        <!-- 上传区域 -->
+        <div class="upload-section">
+            <h2>上传CSV文件</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="file-input">
+                    <input type="file" name="file" id="file" accept=".csv" required>
+                </div>
+                <button type="submit" class="submit-btn">上传并开始查询</button>
+            </form>
+            <div class="template-download">
+                <a href="{{ url_for('download_template') }}" class="template-link">下载模板文件</a>
+            </div>
+        </div>
+
+        <!-- 进度显示区域 (初始隐藏) -->
+        <div id="progressSection" class="progress-section" style="display: none;">
+            <h2>查询进度</h2>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress" style="width: 0%"></div>
+                </div>
+                <div id="progressText" class="progress-text">0%</div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-label">已处理记录:</span>
+                    <span id="currentRecords">0</span> / <span id="totalRecords">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">成功查询:</span>
+                    <span id="successfulQueries">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">失败查询:</span>
+                    <span id="failedQueries">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平均查询时间:</span>
+                    <span id="avgQueryTime">0</span> 秒
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">预计剩余时间:</span>
+                    <span id="estimatedTime">计算中...</span>
+                </div>
+            </div>
+
+            <!-- 错误消息显示 -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <!-- 下载结果按钮 (初始隐藏) -->
+            <div id="downloadSection" class="download-section" style="display: none;">
+                <a id="downloadButton" href="#" class="download-btn">下载查询结果</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
